@@ -12,9 +12,9 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-const defaultTitle = "사랑하는 만큼 보석이 생일빵 때리기";
+const defaultTitle = "보석이 생일빵 때리기";
 const defaultDescription =
-  "사진을 눌러 타격을 쌓고, 실시간 랭킹으로 함께 생일빵을 때려보세요.";
+  "평소 갖고있던 앙금을 오늘 풀자";
 
 /**
  * 카카오·트위터 등 크롤러가 og:image 절대 URL로 가져가도록.
