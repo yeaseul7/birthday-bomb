@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="400" height="400" viewBox="0 0 400 400" role="img" aria-label="t¤@T ¼t">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#fde68a"/>
+      <stop offset="100%" stop-color="#fca5a5"/>
+    </linearGradient>
+  </defs>
+  <rect width="400" height="400" fill="url(#bg)" rx="32"/>
+  <circle cx="200" cy="170" r="88" fill="#fff7ed" stroke="#fb923c" stroke-width="6"/>
+  <ellipse cx="165" cy="155" rx="14" ry="18" fill="#1f2937"/>
+  <ellipse cx="235" cy="155" rx="14" ry="18" fill="#1f2937"/>
+  <path d="M150 210 Q200 245 250 210" fill="none" stroke="#1f2937" stroke-width="6" stroke-linecap="round"/>
+  <text x="200" y="340" text-anchor="middle" font-family="system-ui,sans-serif" font-size="22" fill="#7c2d12">
+    public/boyfriend.jpg | #´ü8”
+  </text>
+</svg>
