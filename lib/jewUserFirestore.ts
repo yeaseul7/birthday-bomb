@@ -3,8 +3,11 @@ import {
   collection,
   doc,
   getDoc,
+  getDocs,
+  query,
   serverTimestamp,
   updateDoc,
+  where,
 } from "firebase/firestore";
 import { getFirestoreDb } from "@/lib/firebase";
 
@@ -43,4 +46,25 @@ export async function fetchUserHitCount(userDocId: string): Promise<number> {
   if (!snap.exists()) return 0;
   const raw = snap.data()?.hitCount;
   return typeof raw === "number" && Number.isFinite(raw) ? Math.max(0, raw) : 0;
+}
+
+export type JewUserNameMatch = {
+  id: string;
+  hitCount: number;
+};
+
+/** 이름이 정확히 일치하는 기존 유저(동명이인 가능) */
+export async function findUsersByExactName(
+  name: string,
+): Promise<JewUserNameMatch[]> {
+  const db = getFirestoreDb();
+  const userCollection = collection(db, "jew", JEW_USER_PARENT_DOC_ID, "user");
+  const q = query(userCollection, where("name", "==", name));
+  const snap = await getDocs(q);
+  return snap.docs.map((d) => {
+    const raw = d.data()?.hitCount;
+    const hitCount =
+      typeof raw === "number" && Number.isFinite(raw) ? Math.max(0, raw) : 0;
+    return { id: d.id, hitCount };
+  });
 }

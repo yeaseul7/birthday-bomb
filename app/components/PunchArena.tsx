@@ -53,6 +53,9 @@ export function PunchArena({ leaderboardSlot }: PunchArenaProps) {
   const wrapRef = useRef<HTMLDivElement>(null);
   const photoButtonRef = useRef<HTMLDivElement>(null);
   const bounceToDefaultRef = useRef<number | undefined>(undefined);
+  /** 반응 사진이 바뀐 뒤 기본 컷으로 돌아오기 전까지 탭 무시 (연타 시 어색함 방지) */
+  const reactionInputLockedRef = useRef(false);
+  const [reactionInputLocked, setReactionInputLocked] = useState(false);
   const [hits, setHits] = useState(0);
   const [shaking, setShaking] = useState(false);
   const [reaction, setReaction] = useState<JewReaction>(JEW_DEFAULT_REACTION);
@@ -97,6 +100,7 @@ export function PunchArena({ leaderboardSlot }: PunchArenaProps) {
         window.clearTimeout(bounceToDefaultRef.current);
         bounceToDefaultRef.current = undefined;
       }
+      reactionInputLockedRef.current = false;
     };
   }, []);
 
@@ -121,16 +125,17 @@ export function PunchArena({ leaderboardSlot }: PunchArenaProps) {
 
   const registerHit = useCallback(
     (clientX: number, clientY: number) => {
-      if (bounceToDefaultRef.current !== undefined) {
-        window.clearTimeout(bounceToDefaultRef.current);
-        bounceToDefaultRef.current = undefined;
-      }
+      if (reactionInputLockedRef.current) return;
 
       if (Math.random() < JEW_REACTION_FLASH_CHANCE) {
+        reactionInputLockedRef.current = true;
+        setReactionInputLocked(true);
         setReaction(pickRandomJewReactionExcludingDefault());
         bounceToDefaultRef.current = window.setTimeout(() => {
           bounceToDefaultRef.current = undefined;
           setReaction(JEW_DEFAULT_REACTION);
+          reactionInputLockedRef.current = false;
+          setReactionInputLocked(false);
         }, randomReactionDwellMs());
       } else {
         setReaction(JEW_DEFAULT_REACTION);
@@ -154,10 +159,11 @@ export function PunchArena({ leaderboardSlot }: PunchArenaProps) {
 
   const onPointerDown = useCallback(
     (e: ReactPointerEvent<HTMLDivElement>) => {
+      if (reactionInputLocked) return;
       if (e.button !== 0 && e.pointerType === "mouse") return;
       registerHit(e.clientX, e.clientY);
     },
-    [registerHit],
+    [reactionInputLocked, registerHit],
   );
 
   const onSavedName = useCallback((name: string) => {
@@ -234,6 +240,7 @@ export function PunchArena({ leaderboardSlot }: PunchArenaProps) {
             onKeyDown={(e) => {
               if (e.key === "Enter" || e.key === " ") {
                 e.preventDefault();
+                if (reactionInputLocked) return;
                 const btn = photoButtonRef.current;
                 if (!btn) return;
                 const br = btn.getBoundingClientRect();
@@ -241,9 +248,13 @@ export function PunchArena({ leaderboardSlot }: PunchArenaProps) {
               }
             }}
             className={[
-              "relative box-border flex w-full cursor-pointer items-center justify-center outline-none transition-transform",
+              "relative box-border flex w-full items-center justify-center outline-none transition-transform",
               "min-h-[min(44dvh,340px)] px-5 py-8 sm:min-h-[min(48dvh,380px)] sm:px-8 sm:py-10 md:min-h-[min(52dvh,420px)] md:px-12 md:py-12",
+              reactionInputLocked
+                ? "cursor-wait pointer-events-none opacity-90"
+                : "cursor-pointer",
             ].join(" ")}
+            aria-busy={reactionInputLocked}
             aria-label="사진 탭해서 생일빵 때리기"
           >
             <div className="relative mx-auto w-full max-w-full">
