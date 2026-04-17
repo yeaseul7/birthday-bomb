@@ -1,36 +1,95 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Birthday Bomb
 
-## Getting Started
+생일빵 콘셉트의 인터랙티브 웹앱입니다.  
+사진을 터치해 타격 횟수를 올리고, 똥/케이크 특수 버튼으로 전용 애니메이션과 반응 컷을 보여줍니다.
 
-First, run the development server:
+## 주요 기능
+
+- 사진 탭/클릭 타격 + 누적 횟수 저장
+- 실시간 랭킹(모바일은 접기/펼치기 지원)
+- 특수 공격:
+  - `pow.png` 투척 → `14.png` 반응 컷
+  - `cake.png` 투척 → `13.png` 반응 컷
+- 전역 특수 카운터:
+  - 보석이가 똥 맞은 횟수(`powCount`)
+  - 보석이가 케이크 맞은 횟수(`cakeCount`)
+- 매크로 의심 입력 감지 시 패널티 및 declaration 로그 기록
+
+## 기술 스택
+
+- Next.js 15 (App Router)
+- React 19
+- TypeScript
+- Tailwind CSS 4
+- Framer Motion
+- Firebase Firestore
+
+## 로컬 실행
 
 ```bash
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+- 개발 서버: `http://localhost:417`
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## 스크립트
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```bash
+npm run dev       # 개발 서버 (turbopack, 417 포트)
+npm run dev:clean # .next 삭제 후 개발 서버
+npm run lint      # ESLint
+npm run build     # 프로덕션 빌드
+npm run start     # 프로덕션 서버 (417 포트)
+```
 
-## Learn More
+## 환경 변수
 
-To learn more about Next.js, take a look at the following resources:
+Firebase 웹 SDK 설정이 필요합니다. `.env.local`에 아래 키를 설정하세요.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+```bash
+NEXT_PUBLIC_FIREBASE_API_KEY=
+NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=
+NEXT_PUBLIC_FIREBASE_PROJECT_ID=
+NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=
+NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=
+NEXT_PUBLIC_FIREBASE_APP_ID=
+NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID=
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Firestore 구조
 
-## Deploy on Vercel
+- `jew/main/user/{userDocId}`
+  - 유저 이름, 개인 타격 누적
+- `jew/main/special/totals`
+  - `powCount`, `cakeCount` 전역 특수 카운트
+- `jew/main/declaration/{autoId}`
+  - 매크로 감지 로그(`hitCount`, `userDocId`, `createdAt`)
+- `jew/main/letter/{letterId}`
+  - 편지 데이터
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Firestore Rules 배포
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+`firestore.rules`를 수정했다면 아래를 실행해 반영하세요.
+
+```bash
+firebase deploy --only firestore:rules
+```
+
+## 프로젝트 구조 (요약)
+
+```text
+app/
+  components/
+    PunchArena.tsx
+    HitCountLeaderboard.tsx
+    PlayerNameForm.tsx
+    LetterMessageFab.tsx
+lib/
+  firebase.ts
+  jewUserFirestore.ts
+  jewSpecialCounters.ts
+  jewDeclarationFirestore.ts
+  jewReactions.ts
+firestore.rules
+```

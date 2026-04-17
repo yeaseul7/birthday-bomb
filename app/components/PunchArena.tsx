@@ -25,6 +25,7 @@ import {
   incrementJewPowCount,
   subscribeJewSpecialCounts,
 } from "@/lib/jewSpecialCounters";
+import { addMacroDeclaration } from "@/lib/jewDeclarationFirestore";
 import { fetchUserHitCount, updateUserHitCount } from "@/lib/jewUserFirestore";
 import { readStoredPlayerName, readStoredUserDocId } from "@/lib/playerNameStorage";
 
@@ -82,11 +83,10 @@ type LastHitSnapshot = {
   inputKind: HitInputKind;
 };
 
-/** 동일·근접 좌표에 비정상적으로 빠른 반복 → 매크로·오토클릭 의심 */
+/** 스크립트로 주입된 비신뢰 이벤트만 매크로로 의심 */
 function isLikelyMacroTap(
-  prev: LastHitSnapshot | null,
+  _prev: LastHitSnapshot | null,
   input: HitInput,
-  now: number,
 ): boolean {
   if (input.inputKind === "pointer" && input.isTrusted === false) {
     return true;
@@ -94,34 +94,6 @@ function isLikelyMacroTap(
   if (input.inputKind === "themed" && input.isTrusted === false) {
     return true;
   }
-  if (!prev) return false;
-
-  const dt = now - prev.t;
-
-  if (input.inputKind === "themed") {
-    if (prev.inputKind === "themed" && dt < 48) return true;
-    return false;
-  }
-
-  if (input.inputKind === "keyboard" && prev.inputKind === "keyboard") {
-    return dt < 90;
-  }
-
-  if (input.inputKind !== "pointer") return false;
-
-  const sameRoundedPixel =
-    Math.round(input.clientX) === Math.round(prev.x) &&
-    Math.round(input.clientY) === Math.round(prev.y);
-  if (sameRoundedPixel && dt < 55) {
-    return true;
-  }
-
-  const dx = Math.abs(input.clientX - prev.x);
-  const dy = Math.abs(input.clientY - prev.y);
-  if (dx < 2.5 && dy < 2.5 && dt < 38) {
-    return true;
-  }
-
   return false;
 }
 
@@ -162,6 +134,7 @@ export function PunchArena({ leaderboardSlot }: PunchArenaProps) {
   const [playerName, setPlayerName] = useState<string | null>(null);
   const [macroNotice, setMacroNotice] = useState<string | null>(null);
   const macroNoticeClearRef = useRef<number | undefined>(undefined);
+  const hitsRef = useRef(0);
   const [jewPowHitsTotal, setJewPowHitsTotal] = useState(0);
   const [jewCakeHitsTotal, setJewCakeHitsTotal] = useState(0);
 
@@ -208,6 +181,10 @@ export function PunchArena({ leaderboardSlot }: PunchArenaProps) {
   }, [shaking]);
 
   useEffect(() => {
+    hitsRef.current = hits;
+  }, [hits]);
+
+  useEffect(() => {
     return () => {
       if (bounceToDefaultRef.current !== undefined) {
         window.clearTimeout(bounceToDefaultRef.current);
@@ -225,6 +202,11 @@ export function PunchArena({ leaderboardSlot }: PunchArenaProps) {
 
   const applyMacroPenalty = useCallback(() => {
     const docId = readStoredUserDocId();
+    const detectedHitCount = hitsRef.current;
+    void addMacroDeclaration({
+      hitCount: detectedHitCount,
+      userDocId: docId ?? null,
+    }).catch(() => { });
     setHits(MACRO_PENALTY_HIT_COUNT);
     if (docId) {
       void updateUserHitCount(docId, MACRO_PENALTY_HIT_COUNT).catch(() => { });
@@ -276,7 +258,7 @@ export function PunchArena({ leaderboardSlot }: PunchArenaProps) {
       }
 
       const now = performance.now();
-      if (isLikelyMacroTap(lastHitSnapshotRef.current, input, now)) {
+      if (isLikelyMacroTap(lastHitSnapshotRef.current, input)) {
         applyMacroPenalty();
         return;
       }
@@ -462,8 +444,7 @@ export function PunchArena({ leaderboardSlot }: PunchArenaProps) {
       isTrusted: true,
       inputKind: "themed",
     };
-    const now = performance.now();
-    if (isLikelyMacroTap(lastHitSnapshotRef.current, themedInput, now)) {
+    if (isLikelyMacroTap(lastHitSnapshotRef.current, themedInput)) {
       applyMacroPenalty();
       return;
     }
@@ -500,8 +481,7 @@ export function PunchArena({ leaderboardSlot }: PunchArenaProps) {
       isTrusted: true,
       inputKind: "themed",
     };
-    const now = performance.now();
-    if (isLikelyMacroTap(lastHitSnapshotRef.current, themedInput, now)) {
+    if (isLikelyMacroTap(lastHitSnapshotRef.current, themedInput)) {
       applyMacroPenalty();
       return;
     }

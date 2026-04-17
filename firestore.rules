@@ -38,6 +38,14 @@ service cloud.firestore {
       allow delete: if false;
     }
 
+    // jew / main / declaration / {autoId} — 매크로 감지 감사 로그
+    match /jew/{jewParent}/declaration/{declarationId} {
+      allow create: if jewParent == 'main'
+        && isValidJewDeclarationCreate();
+
+      allow read, update, delete: if false;
+    }
+
     // coupon 컬렉션: 모두 읽기 허용, used 필드만 업데이트 허용
     match /coupon/{document} {
       allow read: if true;
@@ -97,4 +105,15 @@ function isValidJewLetterCreate() {
     && d.content is string
     && d.content.size() >= 1
     && d.content.size() <= 1000;
+}
+
+function isValidJewDeclarationCreate() {
+  let d = request.resource.data;
+  return d.keys().hasOnly(['hitCount', 'userDocId', 'createdAt'])
+    && d.hitCount is int
+    && d.hitCount >= 0
+    && d.hitCount < 100000000
+    && d.userDocId is string
+    && d.userDocId.size() >= 0
+    && d.userDocId.size() <= 128;
 }
