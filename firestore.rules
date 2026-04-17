@@ -17,18 +17,32 @@ service cloud.firestore {
       allow delete: if false;
     }
 
+    // jew / main / letter — 편지 (userName, userDocId, content, createdAt)
+    match /jew/{jewParent}/letter/{letterId} {
+      allow read: if jewParent == 'main';
+
+      allow create: if jewParent == 'main'
+        && isValidJewLetterCreate();
+
+      allow update, delete: if false;
+    }
+
+    // jew / main / special / totals — 전역 powCount, cakeCount (lib/jewSpecialCounters.ts)
+    match /jew/{jewParent}/special/{docId} {
+      allow read: if jewParent == 'main';
+
+      allow create, update: if jewParent == 'main'
+        && docId == 'totals'
+        && isValidJewSpecialCountersWrite();
+
+      allow delete: if false;
+    }
+
     // coupon 컬렉션: 모두 읽기 허용, used 필드만 업데이트 허용
     match /coupon/{document} {
       allow read: if true;
       allow update: if request.resource.data.diff(resource.data).affectedKeys().hasOnly(['used']);
       allow create, delete: if false;
-    }
-
-    // letter 컬렉션: 읽기/쓰기 모두 허용
-    match /letter/{document} {
-      allow read: if true;
-      allow create: if true;
-      allow update, delete: if false;
     }
 
     // 그 외 컬렉션은 기본적으로 다 막기
@@ -57,4 +71,30 @@ function isValidJewUserHitUpdate() {
   return diff.affectedKeys().hasOnly(['hitCount'])
     && request.resource.data.hitCount is int
     && request.resource.data.hitCount >= 0;
+}
+
+function isValidJewSpecialCountersWrite() {
+  let d = request.resource.data;
+  let keysOk = d.keys().hasOnly(['powCount'])
+    || d.keys().hasOnly(['cakeCount'])
+    || d.keys().hasOnly(['powCount', 'cakeCount']);
+  let powOk = !d.keys().hasAny(['powCount'])
+    || (d.powCount is int && d.powCount >= 0 && d.powCount < 100000000);
+  let cakeOk = !d.keys().hasAny(['cakeCount'])
+    || (d.cakeCount is int && d.cakeCount >= 0 && d.cakeCount < 100000000);
+  return keysOk && powOk && cakeOk;
+}
+
+function isValidJewLetterCreate() {
+  let d = request.resource.data;
+  return d.keys().hasOnly(['userName', 'userDocId', 'content', 'createdAt'])
+    && d.userName is string
+    && d.userName.size() >= 0
+    && d.userName.size() <= 64
+    && d.userDocId is string
+    && d.userDocId.size() >= 0
+    && d.userDocId.size() <= 128
+    && d.content is string
+    && d.content.size() >= 1
+    && d.content.size() <= 1000;
 }

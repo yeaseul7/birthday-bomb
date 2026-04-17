@@ -14,10 +14,28 @@ export const JEW_REACTIONS: JewReaction[] = [
   { id: 6, imageSrc: "/jewel/6.png", line: "아으 시원해.." },
   { id: 7, imageSrc: "/jewel/7.png", line: "응 하나도 안아파~" },
   { id: 8, imageSrc: "/jewel/8.png", line: "이건 좀 아프다 조심해라" },
+  { id: 9, imageSrc: "/jewel/9.png", line: "슉슈슈 피했죠?" },
+  { id: 10, imageSrc: "/jewel/10.png", line: "아앗 피하기 실패" },
+  { id: 11, imageSrc: "/jewel/11.png", line: "머리카락만 맞았죠?" },
+  { id: 12, imageSrc: "/jewel/12.png", line: "날 맞춰맞춰 귀순 날 맞춰요오~~" },
 ];
 
 export const JEW_DEFAULT_REACTION: JewReaction =
   JEW_REACTIONS.find((r) => r.id === 4) ?? JEW_REACTIONS[3]!;
+
+/** 케이크 던지기 성공 후 컷 (랜덤 플래시 풀에는 넣지 않음) */
+export const JEW_CAKE_SMASH_REACTION: JewReaction = {
+  id: 13,
+  imageSrc: "/jewel/13.png",
+  line: "악!",
+};
+
+/** 똥 던지기 성공 후 컷 (랜덤 플래시 풀에는 넣지 않음) */
+export const JEW_POOP_HIT_REACTION: JewReaction = {
+  id: 14,
+  imageSrc: "/jewel/14.png",
+  line: "에이 드릅게..",
+};
 
 /** 기본(4.png) 제외 — 1,2,3,5,6 중 무작위 */
 export function pickRandomJewReactionExcludingDefault(): JewReaction {
