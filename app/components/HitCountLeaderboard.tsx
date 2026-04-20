@@ -12,7 +12,7 @@ const ROW_VARIANTS = {
   animate: { opacity: 1, scale: 1 },
 };
 
-export type HitCountLeaderboardPlacement = "fixed" | "inline";
+export type HitCountLeaderboardPlacement = "fixed" | "inline" | "standalone";
 
 const LEADERBOARD_TOP_N = 10;
 
@@ -47,26 +47,52 @@ function RankMedalBadge({
   const wrap =
     placement === "inline"
       ? "flex h-4 w-4 shrink-0 items-center justify-center"
-      : "flex h-5 w-5 shrink-0 items-center justify-center sm:h-5 sm:w-5";
+      : placement === "standalone"
+        ? "flex h-5 w-5 shrink-0 items-center justify-center sm:h-6 sm:w-6"
+        : "flex h-5 w-5 shrink-0 items-center justify-center sm:h-5 sm:w-5";
 
   if (rank === 1) {
     return (
       <span className={wrap} title="1위 금메달" role="img" aria-label="1위 금메달">
-        <span className="text-[15px] leading-none sm:text-[17px]">🥇</span>
+        <span
+          className={
+            placement === "standalone"
+              ? "text-[17px] leading-none sm:text-[20px]"
+              : "text-[15px] leading-none sm:text-[17px]"
+          }
+        >
+          🥇
+        </span>
       </span>
     );
   }
   if (rank === 2) {
     return (
       <span className={wrap} title="2위 은메달" role="img" aria-label="2위 은메달">
-        <span className="text-[15px] leading-none sm:text-[17px]">🥈</span>
+        <span
+          className={
+            placement === "standalone"
+              ? "text-[17px] leading-none sm:text-[20px]"
+              : "text-[15px] leading-none sm:text-[17px]"
+          }
+        >
+          🥈
+        </span>
       </span>
     );
   }
   if (rank === 3) {
     return (
       <span className={wrap} title="3위 동메달" role="img" aria-label="3위 동메달">
-        <span className="text-[15px] leading-none sm:text-[17px]">🥉</span>
+        <span
+          className={
+            placement === "standalone"
+              ? "text-[17px] leading-none sm:text-[20px]"
+              : "text-[15px] leading-none sm:text-[17px]"
+          }
+        >
+          🥉
+        </span>
       </span>
     );
   }
@@ -80,7 +106,9 @@ function RankMedalBadge({
         className={
           placement === "inline"
             ? "h-3 w-3 text-amber-700/35"
-            : "h-3.5 w-3.5 text-amber-700/40 sm:h-4 sm:w-4"
+            : placement === "standalone"
+              ? "h-4 w-4 text-amber-700/45 sm:h-[1.125rem] sm:w-[1.125rem]"
+              : "h-3.5 w-3.5 text-amber-700/40 sm:h-4 sm:w-4"
         }
       />
     </span>
@@ -89,6 +117,8 @@ function RankMedalBadge({
 
 type HitCountLeaderboardProps = {
   placement: HitCountLeaderboardPlacement;
+  /** true면 상위 N명 제한 없이 전체 행 표시 (랭킹 전용 페이지 등) */
+  showFullRanking?: boolean;
 };
 
 function ChevronToggleIcon({ open }: { open: boolean }) {
@@ -114,7 +144,10 @@ function ChevronToggleIcon({ open }: { open: boolean }) {
   );
 }
 
-export function HitCountLeaderboard({ placement }: HitCountLeaderboardProps) {
+export function HitCountLeaderboard({
+  placement,
+  showFullRanking = false,
+}: HitCountLeaderboardProps) {
   const { rows, error } = useJewLeaderboard();
   const [mobileRankOpen, setMobileRankOpen] = useState(true);
 
@@ -123,23 +156,52 @@ export function HitCountLeaderboard({ placement }: HitCountLeaderboardProps) {
 
   const shellClass =
     placement === "fixed"
-      ? "fixed right-2 top-14 hidden w-[11rem] max-w-[calc(100vw-1rem)] sm:flex sm:right-4 sm:top-16 sm:w-56"
-      : "relative mx-auto mt-1 w-full max-w-[min(100%,20rem)] sm:hidden";
+      ? "fixed right-2 top-14 z-[8000] hidden w-[11rem] max-w-[calc(100vw-1rem)] sm:flex sm:right-4 sm:top-16 sm:w-56"
+      : placement === "inline"
+        ? "relative z-[8000] mx-auto mt-1 w-full max-w-[min(100%,20rem)] sm:hidden"
+        : [
+            "relative z-10 mx-auto w-full max-w-md sm:max-w-lg",
+            showFullRanking ? "min-h-0 flex-1" : "",
+          ]
+            .filter(Boolean)
+            .join(" ");
 
   const panelClass =
     placement === "inline"
       ? "rounded-xl border border-amber-900/20 bg-white/92 px-2 py-1.5 shadow-md backdrop-blur-md sm:rounded-2xl sm:px-3 sm:py-2.5"
-      : "rounded-2xl border border-amber-900/20 bg-white/90 px-2.5 py-2 shadow-lg backdrop-blur-md sm:px-3 sm:py-2.5";
+      : placement === "standalone"
+        ? "rounded-2xl border border-amber-900/20 bg-white/92 px-4 py-3.5 shadow-xl backdrop-blur-md sm:px-5 sm:py-4"
+        : "rounded-2xl border border-amber-900/20 bg-white/90 px-2.5 py-2 shadow-lg backdrop-blur-md sm:px-3 sm:py-2.5";
 
   const titleClass =
     placement === "inline"
       ? "border-b border-amber-900/10 pb-1 text-center text-[9px] font-bold uppercase tracking-wider text-amber-900/70"
-      : "border-b border-amber-900/10 pb-1.5 text-center text-[10px] font-bold uppercase tracking-wider text-amber-900/70 sm:text-xs";
+      : placement === "standalone"
+        ? "border-b border-amber-900/10 pb-2 text-center text-xs font-bold uppercase tracking-wider text-amber-900/75 sm:text-sm"
+        : "border-b border-amber-900/10 pb-1.5 text-center text-[10px] font-bold uppercase tracking-wider text-amber-900/70 sm:text-xs";
 
   const listMaxH =
     placement === "inline"
       ? "max-h-[min(28vh,11rem)] sm:max-h-[min(56vh,26rem)]"
-      : "max-h-[min(52vh,22rem)] sm:max-h-[min(56vh,26rem)]";
+      : placement === "standalone"
+        ? showFullRanking
+          ? ""
+          : "max-h-[min(72vh,28rem)] sm:max-h-[min(78vh,32rem)]"
+        : "max-h-[min(52vh,22rem)] sm:max-h-[min(56vh,26rem)]";
+
+  const listGapClass =
+    placement === "inline"
+      ? "space-y-0"
+      : placement === "standalone"
+        ? "space-y-1"
+        : "space-y-0.5";
+
+  const listOlClass =
+    placement === "standalone" && showFullRanking
+      ? `mt-1 min-h-0 flex-1 overflow-y-auto overscroll-contain pr-0.5 ${listGapClass}`
+      : `mt-1 overflow-y-auto overscroll-contain pr-0.5 ${listMaxH} ${listGapClass}`;
+
+  const displayRows = showFullRanking ? rows : rows.slice(0, LEADERBOARD_TOP_N);
 
   const rankBody =
     error ? (
@@ -147,7 +209,9 @@ export function HitCountLeaderboard({ placement }: HitCountLeaderboardProps) {
         className={
           placement === "inline"
             ? "mt-1.5 text-center text-[9px] leading-snug text-red-600"
-            : "mt-2 text-center text-[10px] leading-snug text-red-600 sm:text-xs"
+            : placement === "standalone"
+              ? "mt-3 text-center text-sm leading-snug text-red-600 sm:text-base"
+              : "mt-2 text-center text-[10px] leading-snug text-red-600 sm:text-xs"
         }
       >
         {error}
@@ -157,21 +221,25 @@ export function HitCountLeaderboard({ placement }: HitCountLeaderboardProps) {
         className={
           placement === "inline"
             ? "mt-1.5 text-center text-[9px] text-amber-950/50"
-            : "mt-2 text-center text-[10px] text-amber-950/50 sm:text-xs"
+            : placement === "standalone"
+              ? "mt-3 text-center text-sm text-amber-950/55 sm:text-base"
+              : "mt-2 text-center text-[10px] text-amber-950/50 sm:text-xs"
         }
       >
         아직 참가자가 없어요
       </p>
     ) : (
       <LayoutGroup>
-        <ol
-          className={`mt-1 overflow-y-auto overscroll-contain pr-0.5 ${listMaxH} ${placement === "inline" ? "space-y-0" : "space-y-0.5"}`}
-        >
-          {rows.slice(0, LEADERBOARD_TOP_N).map((row, index) => {
+        <ol className={listOlClass}>
+          {displayRows.map((row, index) => {
             const rank = index + 1;
             const isMe = myDocId !== "" && row.docId === myDocId;
             const rowText =
-              placement === "inline" ? "text-[9px]" : "text-[10px] sm:text-xs";
+              placement === "inline"
+                ? "text-[9px]"
+                : placement === "standalone"
+                  ? "text-sm sm:text-[0.9375rem]"
+                  : "text-[10px] sm:text-xs";
             return (
               <motion.li
                 key={row.docId}
@@ -213,10 +281,20 @@ export function HitCountLeaderboard({ placement }: HitCountLeaderboardProps) {
 
   return (
     <aside
-      className={`pointer-events-auto z-[8000] flex flex-col ${shellClass}`}
+      className={`pointer-events-auto flex flex-col ${shellClass}`}
       aria-label="타격 횟수 랭킹"
     >
-      <div className={`w-full ${panelClass}`}>
+      <div
+        className={[
+          "w-full",
+          panelClass,
+          placement === "standalone" && showFullRanking
+            ? "flex min-h-0 flex-1 flex-col"
+            : "",
+        ]
+          .filter(Boolean)
+          .join(" ")}
+      >
         {placement === "inline" ? (
           <>
             <button
@@ -245,8 +323,18 @@ export function HitCountLeaderboard({ placement }: HitCountLeaderboardProps) {
           </>
         ) : (
           <>
-            <p className={titleClass}>실시간 랭킹</p>
-            {rankBody}
+            <p className={titleClass}>
+              {placement === "standalone" && showFullRanking
+                ? "전체 랭킹"
+                : placement === "standalone"
+                  ? "참가자 랭킹"
+                  : "실시간 랭킹"}
+            </p>
+            {placement === "standalone" && showFullRanking ? (
+              <div className="flex min-h-0 flex-1 flex-col">{rankBody}</div>
+            ) : (
+              rankBody
+            )}
           </>
         )}
       </div>

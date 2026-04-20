@@ -153,24 +153,47 @@ export function PunchArena({ leaderboardSlot }: PunchArenaProps) {
     return unsub;
   }, []);
 
-  /** Firestore에 저장된 누적 타격 — 새로 들어와도 0부터가 아니게 */
+  /**
+   * Firestore에 저장된 누적 타격 — 새로 들어와도 0부터가 아니게.
+   * `playerName === ""` 인 경우에도 docId만 있으면 동기화해야 함.
+   * (`!playerName` 이면 "" 에서 effect 가 영원히 스킵되어 0으로 고정되는 버그)
+   */
   useEffect(() => {
-    if (!playerName) return;
+    if (playerName === null) return;
     const docId = readStoredUserDocId();
     if (!docId) return;
+
     let cancelled = false;
-    void (async () => {
-      try {
-        const serverHits = await fetchUserHitCount(docId);
-        if (!cancelled) {
-          setHits((prev) => Math.max(prev, serverHits));
+    const syncFromServer = () => {
+      void (async () => {
+        try {
+          const serverHits = await fetchUserHitCount(docId);
+          if (!cancelled) {
+            setHits((prev) => Math.max(prev, serverHits));
+          }
+        } catch {
+          /* 권한/오프라인: 로컬 값 유지 */
         }
-      } catch {
-        /* 권한/오프라인: 로컬 0 유지 */
+      })();
+    };
+
+    syncFromServer();
+
+    const onVisible = () => {
+      if (document.visibilityState === "visible") {
+        syncFromServer();
       }
-    })();
+    };
+    const onFocus = () => {
+      syncFromServer();
+    };
+    document.addEventListener("visibilitychange", onVisible);
+    window.addEventListener("focus", onFocus);
+
     return () => {
       cancelled = true;
+      document.removeEventListener("visibilitychange", onVisible);
+      window.removeEventListener("focus", onFocus);
     };
   }, [playerName]);
 
